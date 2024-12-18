@@ -1,7 +1,7 @@
 import logging
 import re
-import subprocess
-from pathlib import Path
+
+import whisper
 
 
 class TranscriptProcessor:
@@ -52,26 +52,39 @@ class TranscriptProcessor:
 
 
 class Transcriber:
-    """
-    Uses Whisper CLI to transcribe audio files.
-    """
-
-    def __init__(self, model="medium"):
-        self.model = model
+    def __init__(self, model_name):
+        self.model_name = model_name
+        try:
+            self.model = whisper.load_model(self.model_name)
+        except Exception as e:
+            logging.error("Error loading Whisper model '%s': %s", self.model_name, e)
+            self.model = None
 
     def transcribe_with_whisper(self, audio_file):
-        """
-        Use local Whisper CLI to transcribe the audio file.
-        Returns the transcript text or None on error.
-        """
-        cmd_whisper = ["whisper", audio_file, "--model", self.model, "--language", "en"]
-        result = subprocess.run(cmd_whisper, capture_output=True, text=True)
-        if result.returncode != 0:
-            logging.debug("Whisper transcription error: %s", result.stderr)
+        if self.model is None:
+            logging.error("No model loaded; cannot transcribe.")
             return None
 
-        transcript_file = Path(audio_file).with_suffix(".txt")
-        if transcript_file.exists():
-            raw_transcript = transcript_file.read_text(encoding='utf-8')
+        try:
+            audio = whisper.load_audio(audio_file)
+            snippet = whisper.pad_or_trim(audio)
+            mel = whisper.log_mel_spectrogram(snippet, n_mels=self.model.dims.n_mels).to(self.model.device)
+            _, probs = self.model.detect_language(mel)
+            detected_language = max(probs, key=probs.get)
+            logging.info(f"Detected language: {detected_language}")
+        except Exception as e:
+            logging.error("Error detecting language: %s", e)
+            return None
+
+        try:
+            result = self.model.transcribe(audio_file)
+            raw_transcript = result["text"]
+        except Exception as e:
+            logging.error("Error during transcription: %s", e)
+            return None
+
+        try:
             return TranscriptProcessor.clean_transcript(raw_transcript)
-        return None
+        except Exception as e:
+            logging.error("Error cleaning transcript: %s", e)
+            return None

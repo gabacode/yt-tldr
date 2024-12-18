@@ -75,7 +75,7 @@ class YouTubeSummarizer:
                     console.print("[red]Error: Failed to download audio.[/red]")
                     return
 
-                transcriber = Transcriber(model="medium")
+                transcriber = Transcriber(model_name="turbo")
                 self.transcript = transcriber.transcribe_with_whisper(audio_file)
                 if not self.transcript:
                     logging.error("Failed to transcribe audio.")
