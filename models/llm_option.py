@@ -4,7 +4,8 @@ from enum import Enum
 class LLMOption(Enum):
     OPENAI = "OpenAI"
     ANTHROPIC = "Anthropic"
-    LOCAL_OLLAMA = "Local Ollama"
+    GEMINI = "Gemini"
+    OLLAMA = "Ollama"
 
     @classmethod
     def list_options(cls):

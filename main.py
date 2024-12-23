@@ -41,7 +41,10 @@ def select_llm() -> LLMOption:
     console.print("Please select the language model you want to use:")
     for idx, option in enumerate(options, start=1):
         console.print(f"[cyan]{idx}[/cyan]: {option['name']}")
-    llm_value = Prompt.ask("Select language model (1/2/3)", default="3")
+    llm_value = Prompt.ask(
+        f"Select language model ({'/'.join(str(i) for i in range(1, len(options) + 1))})",
+        default="4"
+    )
     try:
         llm_index = int(llm_value) - 1
         if 0 <= llm_index < len(options):
