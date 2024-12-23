@@ -12,6 +12,8 @@ You know the drill:
 2. `python main.py` (or `python main.py <url>`)
 3. Profit!
 
+If you wish to use remote LLMs, you should set your API keys in a `.env` file (see `.env.example`).
+
 This project is a work in progress and not to be intended as an official release.
 
 I just needed a quick and free solution for the night, might update it in the future.
