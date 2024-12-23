@@ -7,9 +7,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
-from clients import OllamaClient, OpenAIClient
-from clients.anthropic import AnthropicClient
-from clients.gemini import GeminiClient
+from clients import OllamaClient, OpenAIClient, AnthropicClient, GeminiClient
 from models import LLMOption
 from video.audio import AudioDownloader
 from video.info import VideoInfoRetriever
