@@ -1,7 +1,15 @@
 import logging
+import os
 import re
+import warnings
 
 import whisper
+from rich.console import Console
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+console = Console()
 
 
 class TranscriptProcessor:
@@ -71,7 +79,7 @@ class Transcriber:
             mel = whisper.log_mel_spectrogram(snippet, n_mels=self.model.dims.n_mels).to(self.model.device)
             _, probs = self.model.detect_language(mel)
             detected_language = max(probs, key=probs.get)
-            logging.info(f"Detected language: {detected_language}")
+            console.print(f"[bold cyan]\nDetected language: {detected_language}[/bold cyan]")
         except Exception as e:
             logging.error("Error detecting language: %s", e)
             return None

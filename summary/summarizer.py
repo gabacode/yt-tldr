@@ -1,13 +1,16 @@
 import logging
 import tempfile
 
-from ollama import Client
 from rich import box
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
+from clients import OllamaClient, OpenAIClient
+from clients.anthropic import AnthropicClient
+from clients.gemini import GeminiClient
+from models import LLMOption
 from video.audio import AudioDownloader
 from video.info import VideoInfoRetriever
 from video.subtitles import SubtitleManager
@@ -17,22 +20,31 @@ console = Console()
 
 
 class Summarizer:
-    """
-    Uses the Ollama Python client to summarize transcripts.
-    """
+    def __init__(self, llm_option: LLMOption):
+        self.llm_option = llm_option
+        self.client = self.get_client(llm_option)
+        self.llm_name = self.get_llm_name()
 
-    def __init__(self, model="gemma2:latest", host='http://localhost:11434'):
-        self.model = model
-        self.client = Client(host=host, headers={'x-some-header': 'some-value'})
+    @staticmethod
+    def get_client(llm_option: LLMOption):
+        if llm_option == LLMOption.OPENAI:
+            return OpenAIClient()
+        elif llm_option == LLMOption.ANTHROPIC:
+            return AnthropicClient()
+        elif llm_option == LLMOption.GEMINI:
+            return GeminiClient()
+        elif llm_option == LLMOption.OLLAMA:
+            return OllamaClient()
+        else:
+            raise ValueError(f"Invalid LLM client: {llm_option}")
 
-    def summarize_with_ollama(self, transcript,
-                              prompt_template="Summarize the following transcript:\n\n{transcript}\n\nSummary:"):
-        """
-        Summarize the given transcript using Ollama.
-        """
+    def get_llm_name(self):
+        return self.llm_option.value
+
+    def summarize(self, transcript):
+        prompt_template = "Summarize the following transcript:\n\n{transcript}\n\nSummary:"
         prompt = prompt_template.format(transcript=transcript)
-        answer = self.client.generate(model=self.model, prompt=prompt)
-        return answer.response
+        return self.client.chat(prompt)
 
 
 class YouTubeSummarizer:
@@ -44,8 +56,9 @@ class YouTubeSummarizer:
     - Calculates time saved
     """
 
-    def __init__(self, youtube_url):
+    def __init__(self, youtube_url: str, llm: LLMOption):
         self.youtube_url = youtube_url
+        self.summarizer = Summarizer(llm_option=llm)
         self.video_length_seconds = None
         self.transcript = None
         self.summary = None
@@ -84,9 +97,8 @@ class YouTubeSummarizer:
 
             logging.debug("Transcript: %s", self.transcript)
 
-            console.print("[bold cyan]\nSummarizing transcript with Ollama...[/bold cyan]")
-            summarizer = Summarizer()
-            self.summary = summarizer.summarize_with_ollama(self.transcript)
+            console.print(f"[bold cyan]\nSummarizing transcript with {self.summarizer.llm_name}...[/bold cyan]")
+            self.summary = self.summarizer.summarize(self.transcript)
 
             if self.summary:
                 console.print(Panel(Markdown("## Summary\n\n" + self.summary),
