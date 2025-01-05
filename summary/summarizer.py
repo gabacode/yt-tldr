@@ -18,10 +18,11 @@ console = Console()
 
 
 class Summarizer:
-    def __init__(self, llm_option: LLMOption):
+    def __init__(self, llm_option: LLMOption, language: str):
         self.llm_option = llm_option
         self.client = self.get_client(llm_option)
         self.llm_name = self.get_llm_name()
+        self.language = language
 
     @staticmethod
     def get_client(llm_option: LLMOption):
@@ -40,7 +41,14 @@ class Summarizer:
         return self.llm_option.value
 
     def summarize(self, transcript):
-        prompt_template = "Summarize the following transcript:\n\n{transcript}\n\nSummary:"
+        prompt_template = f"""
+        Please summarize the following transcript and provide the summary in {self.language}:
+
+        Transcript:
+        {transcript}
+
+        Summary (in {self.language}):
+        """
         prompt = prompt_template.format(transcript=transcript)
         return self.client.chat(prompt)
 
@@ -54,9 +62,9 @@ class YouTubeSummarizer:
     - Calculates time saved
     """
 
-    def __init__(self, youtube_url: str, llm: LLMOption):
+    def __init__(self, youtube_url: str, llm: LLMOption, language: str):
         self.youtube_url = youtube_url
-        self.summarizer = Summarizer(llm_option=llm)
+        self.summarizer = Summarizer(llm_option=llm, language=language)
         self.video_length_seconds = None
         self.transcript = None
         self.summary = None

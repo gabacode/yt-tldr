@@ -68,10 +68,17 @@ def get_youtube_url_from_params():
     return youtube_url
 
 
+def select_language() -> str:
+    language = Prompt.ask("Please enter the language you want to summarize the video in (e.g. English):",
+                          default="English")
+    return language.strip().lower()
+
+
 def main():
     youtube_url = get_youtube_url_from_params() if len(sys.argv) > 1 else get_youtube_url_from_user()
     llm = select_llm()
-    summarizer = YouTubeSummarizer(youtube_url, llm)
+    language = select_language()
+    summarizer = YouTubeSummarizer(youtube_url, llm, language)
     summarizer.run()
 
 
