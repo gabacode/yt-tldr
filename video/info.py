@@ -12,21 +12,17 @@ class VideoInfoRetriever:
     def __init__(self, url):
         self.url = url
 
-    def get_video_length_seconds(self):
+    def get_video_info(self):
         """
-        Uses yt-dlp to get video metadata in JSON and extracts duration.
-        Returns the duration in seconds or None if not found.
+        Uses yt-dlp to get video metadata in JSON and extracts its details.
         """
         cmd = ["yt-dlp", "--dump-single-json", self.url]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
             logging.error("Error retrieving video info: %s", result.stderr)
             return None
-
         try:
-            info = json.loads(result.stdout)
-            duration = info.get("duration")
-            return duration
+            return json.loads(result.stdout)
         except json.JSONDecodeError:
             logging.error("Failed to parse video info JSON.")
             return None

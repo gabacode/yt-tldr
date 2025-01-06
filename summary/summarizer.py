@@ -40,9 +40,9 @@ class Summarizer:
     def get_llm_name(self):
         return self.llm_option.value
 
-    def summarize(self, transcript):
+    def summarize(self, title, transcript):
         prompt_template = f"""
-        Please summarize the following transcript and provide the summary in {self.language}:
+        Please summarize the following transcript of the video named '{title}' and provide the summary in {self.language}:
 
         Transcript:
         {transcript}
@@ -65,6 +65,7 @@ class YouTubeSummarizer:
     def __init__(self, youtube_url: str, llm: LLMOption, language: str):
         self.youtube_url = youtube_url
         self.summarizer = Summarizer(llm_option=llm, language=language)
+        self.video_title = None
         self.video_length_seconds = None
         self.transcript = None
         self.summary = None
@@ -73,9 +74,11 @@ class YouTubeSummarizer:
         # Create a temporary working directory
         with tempfile.TemporaryDirectory() as tmpdir:
             console.print("[bold cyan]\nFetching video information...[/bold cyan]")
-            # Get video length
+            # Get video info
             info = VideoInfoRetriever(self.youtube_url)
-            self.video_length_seconds = info.get_video_length_seconds()
+            video_info = info.get_video_info()
+            self.video_length_seconds = video_info.get("duration", 0)
+            self.video_title = video_info.get("title", "Unknown")
 
             console.print("[bold cyan]\nChecking for subtitles...[/bold cyan]")
             # Try to get subtitles
@@ -104,10 +107,10 @@ class YouTubeSummarizer:
             logging.debug("Transcript: %s", self.transcript)
 
             console.print(f"[bold cyan]\nSummarizing transcript with {self.summarizer.llm_name}...[/bold cyan]")
-            self.summary = self.summarizer.summarize(self.transcript)
+            self.summary = self.summarizer.summarize(self.video_title, self.transcript)
 
             if self.summary:
-                console.print(Panel(Markdown("## Summary\n\n" + self.summary),
+                console.print(Panel(Markdown(f"## {self.video_title}\n\n{self.summary}"),
                                     title="[bold green]Video Summary[/bold green]",
                                     border_style="green"))
                 self.calculate_time_saved()
