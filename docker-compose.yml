@@ -1,0 +1,13 @@
+services:
+  api:
+    build: ./backend
+    container_name: yt_tldr_api
+    network_mode: host
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/app
+      - whisper_cache:/root/.cache/whisper
+
+volumes:
+  whisper_cache:

@@ -34,3 +34,19 @@ class OpenAIClient:
         except KeyError as e:
             print(f"Error parsing OpenAI API response: {e}")
             return None
+
+    def chat_with_history(self, system: str, messages: list[dict]) -> str:
+        payload = {
+            "model": self.model,
+            "messages": [{"role": "system", "content": system}] + messages,
+        }
+        try:
+            response = requests.post(self.host, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()["choices"][0]["message"]["content"].strip()
+        except requests.exceptions.RequestException as e:
+            print(f"Error communicating with OpenAI API: {e}")
+            return None
+        except KeyError as e:
+            print(f"Error parsing OpenAI API response: {e}")
+            return None
