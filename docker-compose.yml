@@ -6,7 +6,6 @@ services:
       - backend/.env
     volumes:
       - ./backend:/app
-      - whisper_cache:/root/.cache/whisper
     networks:
       - proxy
 
@@ -25,6 +24,3 @@ networks:
   proxy:
     name: ${PROXY_NETWORK:-proxy}
     external: true
-
-volumes:
-  whisper_cache:

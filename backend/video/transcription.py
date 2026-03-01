@@ -1,11 +1,8 @@
 import logging
 import os
 import re
-import warnings
 
-import whisper
-os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
-warnings.filterwarnings("ignore", category=FutureWarning)
+import requests
 
 
 class TranscriptProcessor:
@@ -56,39 +53,21 @@ class TranscriptProcessor:
 
 
 class Transcriber:
-    def __init__(self, model_name):
+    def __init__(self, model_name: str = "turbo"):
         self.model_name = model_name
-        try:
-            self.model = whisper.load_model(self.model_name)
-        except Exception as e:
-            logging.error("Error loading Whisper model '%s': %s", self.model_name, e)
-            self.model = None
+        self.whisper_url = os.getenv("WHISPER_URL", "http://whisper_service:9000")
 
-    def transcribe_with_whisper(self, audio_file):
-        if self.model is None:
-            logging.error("No model loaded; cannot transcribe.")
-            return None
-
+    def transcribe_with_whisper(self, audio_file: str) -> str | None:
         try:
-            audio = whisper.load_audio(audio_file)
-            snippet = whisper.pad_or_trim(audio)
-            mel = whisper.log_mel_spectrogram(snippet, n_mels=self.model.dims.n_mels).to(self.model.device)
-            _, probs = self.model.detect_language(mel)
-            detected_language = max(probs, key=probs.get)
-            logging.info("Detected language: %s", detected_language)
+            with open(audio_file, "rb") as f:
+                response = requests.post(
+                    f"{self.whisper_url}/transcribe",
+                    files={"file": f},
+                    data={"model": self.model_name},
+                    timeout=300,
+                )
+            response.raise_for_status()
+            return response.json()["transcript"]
         except Exception as e:
-            logging.error("Error detecting language: %s", e)
-            return None
-
-        try:
-            result = self.model.transcribe(audio_file)
-            raw_transcript = result["text"]
-        except Exception as e:
-            logging.error("Error during transcription: %s", e)
-            return None
-
-        try:
-            return TranscriptProcessor.clean_transcript(raw_transcript)
-        except Exception as e:
-            logging.error("Error cleaning transcript: %s", e)
+            logging.error("Error calling Whisper service: %s", e)
             return None
