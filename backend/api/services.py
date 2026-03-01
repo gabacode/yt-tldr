@@ -38,9 +38,20 @@ def get_llms() -> LLMsResponse:
 
 def _normalize_youtube_url(url: str) -> str:
     parsed = urlparse(url)
+    # Standard watch URL: youtube.com/watch?v=<id>
     video_id = parse_qs(parsed.query).get("v", [None])[0]
     if video_id:
         return f"https://www.youtube.com/watch?v={video_id}"
+    # Shorts URL: youtube.com/shorts/<id>
+    if parsed.path.startswith("/shorts/"):
+        video_id = parsed.path.split("/shorts/")[1].split("/")[0]
+        if video_id:
+            return f"https://www.youtube.com/watch?v={video_id}"
+    # Short link: youtu.be/<id>
+    if parsed.netloc == "youtu.be":
+        video_id = parsed.path.lstrip("/").split("/")[0]
+        if video_id:
+            return f"https://www.youtube.com/watch?v={video_id}"
     return url
 
 
