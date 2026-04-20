@@ -37,3 +37,21 @@ class AnthropicClient:
         except KeyError as e:
             print(f"Error parsing Anthropic API response: {e}")
             return None
+
+    def chat_with_history(self, system: str, messages: list[dict], max_tokens: int = 1024) -> str:
+        payload = {
+            "model": self.model,
+            "max_tokens": max_tokens,
+            "system": system,
+            "messages": messages,
+        }
+        try:
+            response = requests.post(self.host, headers=self.headers, json=payload)
+            response.raise_for_status()
+            return response.json()["content"][0]["text"].strip()
+        except requests.exceptions.RequestException as e:
+            print(f"Error communicating with Anthropic API: {e}")
+            return None
+        except KeyError as e:
+            print(f"Error parsing Anthropic API response: {e}")
+            return None

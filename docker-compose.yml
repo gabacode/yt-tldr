@@ -1,0 +1,28 @@
+services:
+  api:
+    build: ./backend
+    container_name: yt_tldr_api
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/app
+    networks:
+      - proxy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: yt_tldr_frontend
+    depends_on:
+      - api
+    networks:
+      - proxy
+    restart: unless-stopped
+
+networks:
+  proxy:
+    name: ${PROXY_NETWORK:-proxy}
+    external: true

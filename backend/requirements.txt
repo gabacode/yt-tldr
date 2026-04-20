@@ -1,0 +1,7 @@
+yt-dlp
+ollama~=0.4.4
+requests~=2.32.3
+python-dotenv~=1.0.1
+fastapi~=0.115.0
+uvicorn[standard]~=0.32.0
+rank-bm25~=0.2.2
